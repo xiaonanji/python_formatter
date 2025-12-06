@@ -252,6 +252,14 @@ pre#output {
   border-radius: 2px;
 }
 
+.site-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
 @media (max-width: 720px) {
   .hero h1 {
     font-size: 26px;
