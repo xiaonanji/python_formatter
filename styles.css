@@ -258,6 +258,7 @@ pre#output {
   font-size: 14px;
   margin-top: auto;
   padding-top: 24px;
+  width: 100%;
 }
 
 @media (max-width: 720px) {
