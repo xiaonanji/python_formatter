@@ -8,7 +8,8 @@
   --border: #1f2937;
   --radius: 14px;
   --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, 'Menlo',
+    'Consolas', 'Liberation Mono', 'Courier New', monospace;
 }
 
 * {
@@ -25,7 +26,7 @@ body {
 }
 
 main.page {
-  max-width: 1200px;
+  max-width: 2000px;
   margin: 0 auto;
   padding: 32px 20px 48px;
   display: flex;
@@ -79,9 +80,10 @@ main.page {
 }
 
 .workbench {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
+  display: flex;
+  gap: 0;
+  /* height: 600px;  Let content dictate height or use min-height */
+  min-height: 600px;
 }
 
 .panel {
@@ -92,6 +94,34 @@ main.page {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex: 1;
+  min-width: 200px;
+}
+
+.resizer {
+  width: 12px;
+  cursor: col-resize;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  z-index: 10;
+  /* Ensure it's above */
+}
+
+.resizer:hover,
+.resizer.dragging {
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.resizer::after {
+  content: "";
+  width: 2px;
+  height: 40px;
+  background: var(--border);
+  border-radius: 1px;
 }
 
 .panel-header {
@@ -127,19 +157,46 @@ button:hover:not([disabled]) {
   transform: translateY(-1px);
 }
 
+.input-wrapper {
+  display: flex;
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.line-numbers {
+  padding: 16px 8px;
+  text-align: right;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+  font-family: inherit;
+  user-select: none;
+  min-width: 3em;
+  border-right: 1px solid var(--border);
+}
+
 textarea {
   width: 100%;
-  min-height: 360px;
+  min-height: 100%;
+  /* Fill the panel */
   padding: 16px;
   background: transparent;
   color: var(--text);
   border: none;
-  resize: vertical;
+  resize: none;
   font-size: 15px;
   line-height: 1.5;
+  font-family: inherit;
+  flex: 1;
 }
 
 textarea:focus {
+  outline: none;
+}
+
+.input-wrapper:focus-within {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
@@ -147,16 +204,71 @@ textarea:focus {
 pre#output {
   margin: 0;
   padding: 16px;
-  min-height: 360px;
+  min-height: 100%;
+  /* Fill the panel */
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.35;
   color: var(--text);
-  white-space: pre-wrap;
+  white-space: normal;
   word-break: break-word;
+  font-family: inherit;
+  counter-reset: line;
+  overflow: auto;
+  /* Allow scrolling */
+  flex: 1;
+}
+
+.code-line {
+  display: flex;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+  white-space: pre-wrap;
+}
+
+.code-line::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 3em;
+  min-width: 3em;
+  margin-right: 1em;
+  text-align: right;
+  color: var(--muted);
+  user-select: none;
+  border-right: 1px solid var(--border);
+  padding-right: 8px;
+}
+
+.code-line.highlight {
+  background: rgba(56, 189, 248, 0.16);
+}
+
+.text-highlight {
+  background: rgba(255, 255, 0, 0.25);
+  color: #fff;
+  border-radius: 2px;
 }
 
 @media (max-width: 720px) {
   .hero h1 {
     font-size: 26px;
+  }
+
+  .workbench {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .resizer {
+    display: none;
+    /* Disable resizing on mobile */
+  }
+
+  .panel {
+    min-width: auto;
+    width: 100%;
   }
 }
