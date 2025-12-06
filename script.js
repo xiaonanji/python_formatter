@@ -38,7 +38,6 @@ async function formatInput() {
   const code = inputEl.value;
   if (!code.trim()) {
     outputEl.textContent = '';
-    copyBtn.disabled = true;
     return;
   }
 
@@ -48,64 +47,18 @@ async function formatInput() {
 
   try {
     const pyodide = await pyodideReady;
-    const formattedJson = await pyodide.runPythonAsync(`
-import ast, black, json, pprint, textwrap
-
-raw_input = textwrap.dedent(${JSON.stringify(code)})
-
-def format_payload(value: str):
-    """尝试 Black，失败则回退到 ast/json + pprint。"""
-
-    # 首选 Black（适合合法的 Python 代码 / 表达式字符串）
-    try:
-        return json.dumps({
-            "formatted": black.format_str(value, mode=black.Mode()),
-            "method": "black",
-        }, ensure_ascii=False)
-    except Exception as black_error:
-        last_error = repr(black_error)
-
-    # 回退 1：ast.literal_eval -> pprint（适合 Python 风格的字面量）
-    try:
-        parsed = ast.literal_eval(value)
-        pretty = pprint.pformat(parsed, width=88, compact=False, sort_dicts=False)
-        return json.dumps({"formatted": pretty, "method": "ast"}, ensure_ascii=False)
-    except Exception as ast_error:
-        last_error = repr(ast_error)
-
-    # 回退 2：json.loads -> json.dumps（适合标准 JSON）
-    try:
-        parsed = json.loads(value)
-        pretty = json.dumps(parsed, indent=2, ensure_ascii=False)
-        return json.dumps({"formatted": pretty, "method": "json"}, ensure_ascii=False)
-    except Exception:
-        pass
-
-    # 全部失败则抛出 Black 的原始异常，保持一致的错误提示
-    raise RuntimeError(last_error)
-
-
-format_payload(raw_input)
+    const formatted = await pyodide.runPythonAsync(`
+import black, textwrap
+source = textwrap.dedent(${JSON.stringify(code)})
+black.format_str(source, mode=black.Mode())
 `);
-
-    const { formatted, method } = JSON.parse(formattedJson);
     outputEl.textContent = formatted;
-    copyBtn.disabled = !formatted;
-
-    const methodLabel =
-      method === 'black'
-        ? 'Black'
-        : method === 'ast'
-        ? 'AST + pprint'
-        : 'JSON + indent';
-
-    statusEl.textContent = `格式化完成（${methodLabel}）`;
+    statusEl.textContent = '格式化完成';
     statusEl.classList.remove('error');
   } catch (error) {
     statusEl.textContent = '格式化失败：' + (error.message || error);
     statusEl.classList.add('error');
     outputEl.textContent = '';
-    copyBtn.disabled = true;
     console.error(error);
   } finally {
     formatBtn.disabled = false;
